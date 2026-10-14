@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Receipt Warehouse</title>
+    <style type="text/css">
+        body {
+            font-size: 3.6rem;
+        }
+
+        input {
+            font-size: 4rem;
+            height: 8rem;
+            width: 100%;
+        }
+
+        button {
+            font-size: 4rem;
+            height: 8rem;
+            width: 32rem;
+        }
+    </style>
+</head>
+<body>
+    <h1>Receipt Warehouse</h1>
+    <h3>Upload receipt for processing:</h3>
+    <form id="receipt-form" enctype="multipart/form-data" method="post" action="/upload">
+        <input type="file" name="receipt_files" accept="image/*" multiple>
+        <br>
+        <br>
+        <button type="submit">Submit</button>
+    </form>
+</body>
+</html>
