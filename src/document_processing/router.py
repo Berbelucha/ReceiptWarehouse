@@ -49,6 +49,34 @@ async def scan_documents(request: DocumentProcessingRequest):
             detail=f"Error processing documents: {e!s}"
         )
 
+@router.post("/scan/{filename}", response_model=DocumentProcessingResponse)
+async def scan_document(filename: str, request: DocumentProcessingRequest):
+    """
+    Scan and process document of the given filename in the specified directory.
+
+    This will process single file with the given extensions and upload it
+    to the document processing system.
+    """
+    try:
+        logger.info(f"Scanning directory: {request.directory}")
+        results = await document_service.scan_file(
+            filename=filename,
+            directory=request.directory,
+            force=request.force,
+        )
+
+        return DocumentProcessingResponse(
+            success=True,
+            message=f"Successfully processed {len(results)} documents",
+            results=results
+        )
+    except Exception as e: #noqa: BLE001
+        logger.error(f"Error processing documents: {e!s}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error processing documents: {e!s}"
+        )
+
 @router.post("/fix-ocr", response_model=DocumentProcessingResponse)
 async def fix_ocr(request: OcrFixRequest):
     """

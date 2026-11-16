@@ -231,7 +231,7 @@ class ReceiptPreprocessor:
         weights = []
 
         for line in lines:
-            x1, y1, x2, y2 = line[0]
+            x1, y1, x2, y2 = line
 
             angle = np.degrees(
                 np.arctan2(

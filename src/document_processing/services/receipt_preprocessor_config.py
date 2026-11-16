@@ -183,4 +183,4 @@ class ReceiptPreprocessorConfig:
     # 0.0 = disabled
     # 0.1-0.2 = very subtle tilt
     # 0.3-0.5 = more noticeable tilt
-    ordering_tilt_degrees: float = 0.5
+    ordering_tilt_degrees: float = 0.2

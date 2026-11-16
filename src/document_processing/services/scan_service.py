@@ -17,7 +17,7 @@ from docling.document_converter import DocumentConverter, ImageFormatOption
 
 from src.document_processing.schemas import DocumentProcessingResult, Status
 from src.document_processing.services.line_rebuilder import rebuild_lines_from_cells
-from src.document_processing.services.receipt_preprocessor import ReceiptPreprocessor
+from src.helpers import print_percent_done
 from src.settings import settings
 
 logger = logging.getLogger(__name__)
@@ -58,32 +58,6 @@ def _setup_converter() -> DocumentConverter:
     )
 
 
-# Source - https://stackoverflow.com/a/61433559
-# Posted by Ivan Procopovich, modified by community. See post 'Timeline' for change history
-# Retrieved 2026-11-09, License - CC BY-SA 4.0
-def print_percent_done(index, total, bar_len=50, title="Please wait"):
-    """
-    index is expected to be 0 based index.
-    0 <= index < total
-    """
-    percent_done = (index + 1) / total * 100
-    percent_done = round(percent_done, 1)
-
-    done = round(percent_done / (100 / bar_len))
-    togo = bar_len - done
-
-    done_str = "█" * int(done)
-    togo_str = "░" * int(togo)
-
-    print(
-        f"\t⏳{title}: [{done_str}{togo_str}] {percent_done}% done [{index + 1}/{total}]",
-        end="\r",
-    )
-
-    if round(percent_done) == 100:
-        print("\t✅")
-
-
 class DocumentScanService:
     def __init__(self):
         self.converter = _setup_converter()
@@ -101,7 +75,7 @@ class DocumentScanService:
         if not directory_path.exists():
             raise ValueError(f"Directory does not exist: {directory}")
 
-        file_paths = []
+        file_paths: list[Path] = []
         for item in directory_path.iterdir():
             if item.is_file():
                 ext = item.suffix.lower()
@@ -129,6 +103,38 @@ class DocumentScanService:
                 )
 
         return results
+    
+    async def scan_file(
+        self,
+        filename: str,
+        directory: str,
+        force: bool = False,
+    ) -> list[DocumentProcessingResult]:
+        results = []
+        directory_path = Path(directory)
+
+        if not directory_path.exists():
+            raise ValueError(f"Directory does not exist: {directory}")
+
+        file_path = directory_path / filename
+
+        try:
+            result = await self._process_document(file_path, force)
+            results.append(result)
+            logger.debug("Processed: %s", file_path.name)
+        except Exception as e:
+            logger.exception(f"Error processing {file_path}")
+            results.append(
+                DocumentProcessingResult(
+                    file_path=str(file_path),
+                    filename=file_path.name,
+                    status=Status.ERROR,
+                    error_message=str(e),
+                    processed_at=datetime.now(),
+                )
+            )
+
+        return results
 
     async def _process_document(
         self, file_path: Path, force: bool = False
@@ -150,12 +156,7 @@ class DocumentScanService:
                     processed_at=datetime.now(),
                 )
 
-            preprocessor = ReceiptPreprocessor(
-                perspective=True, textline_dewarp=True, deskew=True
-            )
-
-            stream = preprocessor.process(file_path.read_bytes(), file_path.name)
-            doc = self.converter.convert(stream)
+            doc = self.converter.convert(file_path)
             doc.document = rebuild_lines_from_cells(doc.document, page=doc.pages[0])
             doc.document.save_as_json(new_file_path)
 

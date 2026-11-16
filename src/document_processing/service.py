@@ -25,6 +25,9 @@ class DocumentProcessingService:
     async def scan_directory(self, directory: str, extensions: list[str], force = False, limit = 0) -> list[DocumentProcessingResult]:
         return await self.scan_service.scan_directory(directory, extensions, force, limit)
 
+    async def scan_file(self, filename: str, directory: str, force = False) -> list[DocumentProcessingResult]:
+        return await self.scan_service.scan_file(filename, directory, force)
+
     async def fix_ocr_directory(self, directory: str) -> list[DocumentProcessingResult]:
         return await self.ocr_fix_service.fix_ocr_directory(directory)
 
